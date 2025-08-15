@@ -19,7 +19,7 @@ import {
   Clipboard,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getDummyParaphrase } from "@/lib/dummy-data";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 export function ParaphraseTool() {
   const [inputText, setInputText] = useState("");
@@ -38,14 +38,46 @@ export function ParaphraseTool() {
 
     setIsLoading(true);
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const response = await apiClient.paraphraseText({
+        text: inputText,
+        mode,
+        language,
+        synonymStrength,
+        model,
+      });
 
-    const paraphrased = getDummyParaphrase(inputText, mode);
-    setOutputText(paraphrased);
-    setIsLoading(false);
+      if (response.success && response.data) {
+        setOutputText(response.data.paraphrasedText);
+        toast.success(
+          `Text paraphrased successfully using ${response.data.model}!`
+        );
+      } else {
+        toast.error(response.error?.message || "Failed to paraphrase text");
+      }
+    } catch (error) {
+      console.error("Paraphrase error:", error);
 
-    toast.success("Text paraphrased successfully!");
+      if (error instanceof Error) {
+        const apiError = error as ApiError;
+
+        if (apiError.message.includes("connect to paraphrasing service")) {
+          toast.error(
+            "Backend server is not running. Please start the backend server on port 3001."
+          );
+        } else if (apiError.status === 429) {
+          toast.error("Too many requests. Please wait a moment and try again.");
+        } else if (apiError.status === 400) {
+          toast.error("Invalid input. Please check your text and settings.");
+        } else {
+          toast.error(apiError.message || "An unexpected error occurred");
+        }
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCopy = (text: string) => {
