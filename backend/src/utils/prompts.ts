@@ -8,56 +8,65 @@ export const getModePrompt = (
   const strengthLevel =
     synonymStrength <= 30 ? "low" : synonymStrength <= 70 ? "medium" : "high";
 
-  const baseInstructions = `You are a professional text paraphrasing tool. Your task is to rewrite the given text while preserving its original meaning and context. The output language should be: ${language === "en-us" ? "English (US)" : language}.`;
+  const baseInstructions = `You are an expert text paraphrasing specialist. Your task is to rewrite the given text while preserving its original meaning, context, and key information. Output language: ${language === "en-us" ? "English (US)" : language}.`;
 
   const strengthInstructions = {
-    low: "Make minimal changes to the text, focusing on basic restructuring while keeping most original words.",
+    low: "Use minimal synonym replacement (10-20% of words). Focus on basic sentence restructuring while keeping most original vocabulary.",
     medium:
-      "Make moderate changes, replacing some words with synonyms and restructuring sentences for better flow.",
-    high: "Make significant changes, using extensive synonyms and completely restructuring sentences while preserving meaning.",
+      "Apply moderate synonym replacement (30-50% of words). Restructure sentences for improved flow while maintaining readability.",
+    high: "Employ extensive synonym replacement (60-80% of words). Completely restructure sentences and paragraphs for maximum variation while preserving meaning.",
   };
 
   const modeInstructions = {
     standard:
-      "Rewrite the text in a standard, neutral tone while maintaining clarity and readability.",
+      "Rewrite using clear, neutral language. Maintain the original tone and formality level. Focus on clarity and natural flow without changing the style significantly.",
+
     fluency:
-      "Focus on improving the flow and readability of the text. Make it sound more natural and smooth.",
+      "Enhance readability and flow. Improve sentence transitions, eliminate awkward phrasing, and create smoother connections between ideas. Prioritize natural-sounding language.",
+
     humanize:
-      "Make the text sound more natural and human-like. Remove any robotic or artificial phrasing.",
+      "Transform robotic or AI-generated text into natural, conversational language. Add appropriate contractions, vary sentence length, and use more relatable expressions while maintaining professionalism.",
+
     formal:
-      "Rewrite the text in a formal, professional tone suitable for business or academic contexts.",
+      "Convert to professional, business-appropriate language. Use sophisticated vocabulary, longer sentences, and formal structures. Eliminate contractions and casual expressions.",
+
     academic:
-      "Transform the text into an academic style with scholarly language and precise terminology.",
+      "Transform into scholarly writing style. Use precise terminology, complex sentence structures, and academic conventions. Include appropriate transitions and formal discourse markers.",
+
     simple:
-      "Simplify the text using easier vocabulary and shorter sentences for better comprehension.",
+      "Simplify vocabulary and sentence structure. Use common words, shorter sentences, and clear explanations. Make the content accessible to a broader audience without losing essential meaning.",
+
     creative:
-      "Rewrite the text with creative flair, using vivid language and engaging expressions.",
+      "Rewrite with engaging, vivid language. Use metaphors, varied sentence structures, and descriptive words. Make the text more compelling and interesting while preserving the core message.",
+
     expand:
-      "Elaborate on the original text by adding more detail, context, and explanatory information.",
+      "Elaborate on ideas with additional context, examples, and explanatory details. Expand abbreviated concepts and provide more comprehensive explanations while maintaining focus.",
+
     shorten:
-      "Condense the text while retaining all key information and meaning.",
+      "Condense the text by removing redundancies and non-essential words. Combine related ideas and use more concise expressions while retaining all key information.",
+
     custom:
-      "Apply advanced paraphrasing techniques tailored to the specific content and context.",
+      "Apply sophisticated paraphrasing techniques combining multiple approaches. Adapt style based on content type and context for optimal results.",
   };
 
   return `${baseInstructions}
 
-Mode: ${mode.toUpperCase()}
-${modeInstructions[mode]}
+PARAPHRASING MODE: ${mode.toUpperCase()}
+OBJECTIVE: ${modeInstructions[mode]}
 
-Synonym Replacement Level: ${strengthLevel.toUpperCase()}
-${strengthInstructions[strengthLevel]}
+SYNONYM STRENGTH: ${strengthLevel.toUpperCase()}
+APPROACH: ${strengthInstructions[strengthLevel]}
 
-Instructions:
-1. Preserve the original meaning completely
-2. Maintain the logical flow and structure
-3. Keep any technical terms that are essential
-4. Ensure the output is grammatically correct
-5. Match the tone and formality level specified by the mode
-6. Do not add any introductory phrases like "Here is the rewritten text:"
-7. Return only the paraphrased content
+CRITICAL REQUIREMENTS:
+1. Preserve ALL original meaning and factual information
+2. Maintain logical flow and argument structure  
+3. Keep specialized terms and proper nouns unchanged
+4. Ensure grammatical correctness and natural language
+5. Match the specified mode's style and tone requirements
+6. Return ONLY the paraphrased content without any prefixes or explanations
+7. Maintain appropriate length relative to the original
 
-Text to paraphrase:`;
+INPUT TEXT TO PARAPHRASE:`;
 };
 
 export const validateParaphraseInput = (
