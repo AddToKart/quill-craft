@@ -7,6 +7,7 @@ import { ModeSelector } from "@/components/mode-selector";
 import { LanguageSelector } from "@/components/language-selector";
 import { SynonymStrength } from "@/components/synonym-strength";
 import { StatsCounter } from "@/components/stats-counter";
+import { ComparisonModal } from "@/components/comparison-modal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ import {
   Sparkles,
   FileUp,
   Clipboard,
+  ArrowLeftRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "@/lib/api-client";
@@ -29,6 +31,7 @@ export function ParaphraseTool() {
   const [synonymStrength, setSynonymStrength] = useState(50);
   const [model, setModel] = useState("normal");
   const [isLoading, setIsLoading] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
   const handleParaphrase = async () => {
     if (!inputText.trim()) {
@@ -226,6 +229,15 @@ export function ParaphraseTool() {
                       <Copy className="h-4 w-4 mr-2" />
                       Copy
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowComparison(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <ArrowLeftRight className="h-4 w-4" />
+                      Compare
+                    </Button>
                     <Button variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-2" />
                       Export
@@ -256,6 +268,16 @@ export function ParaphraseTool() {
           </Card>
         </div>
       </div>
+
+      {/* Comparison Modal */}
+      <ComparisonModal
+        isOpen={showComparison}
+        onClose={() => setShowComparison(false)}
+        originalText={inputText}
+        paraphrasedText={outputText}
+        mode={mode}
+        model={model}
+      />
     </div>
   );
 }
