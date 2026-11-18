@@ -1,106 +1,37 @@
-# QuillCraft Setup and Development Guide
+# didi-humanizer - Setup and Development Guide
 
-## Quick Start
+AI text humanizer and detector bypass engine engineered specifically to beat **ZeroGPT**, **GPTZero**, **Turnitin**, and **CopyLeaks**.
 
-### 1. Backend Setup
+## 🚀 Quick Start
 
-```bash
-# Navigate to backend directory
-cd backend
+### 1. Configure Your AI Subscription
 
-# Install dependencies
-npm install
+You can connect **any OpenAI-compatible AI provider** (OpenAI, OpenRouter, DeepSeek, Groq, local Ollama, vLLM, etc.):
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env file and add your API keys:
-# GEMINI_API_KEY=your_actual_gemini_api_key
-# OPENROUTER_API_KEY=your_actual_openrouter_api_key
+Edit [`backend/.env`](file:///d:/code_ni_kurt/quill-craft/backend/.env):
 
-# Start the backend server
-npm run dev
+```env
+# Custom AI Subscription
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL_NAME=gpt-4o-mini
+AI_API_KEY=your_actual_api_key_here
+
+PORT=3001
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
 ```
 
-The backend will start on `http://localhost:3001`
+> [!TIP]
+> You can also configure or change your Base URL, Model Name, and API Key directly in the web UI using the **AI Settings** button (gear icon in the top header).
 
-### 2. Frontend Setup
+### 2. Services Already Running
 
-```bash
-# Navigate to frontend directory (in a new terminal)
-cd frontend
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+- **Backend API:** [http://localhost:3001](http://localhost:3001)
 
-# Install dependencies (if not already done)
-npm install
+### 3. How ZeroGPT & GPTZero Bypass Works
 
-# Start the frontend development server
-npm run dev
-```
-
-The frontend will start on `http://localhost:3000`
-
-### 3. Testing the Integration
-
-1. Open your browser to `http://localhost:3000`
-2. Navigate to the Paraphrasing Tool
-3. Enter some text and click "Paraphrase"
-4. The frontend should now call the backend API
-
-### API Endpoints Available
-
-- **Health Check**: `GET http://localhost:3001/api/health`
-- **Paraphrase**: `POST http://localhost:3001/api/paraphrase`
-- **Models**: `GET http://localhost:3001/api/models`
-
-### Testing the Backend Directly
-
-You can test the backend API directly using curl or a tool like Postman:
-
-```bash
-# Health check
-curl http://localhost:3001/api/health
-
-# Paraphrase request
-curl -X POST http://localhost:3001/api/paraphrase \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "This is a test sentence for paraphrasing.",
-    "mode": "standard",
-    "language": "en-us",
-    "synonymStrength": 50,
-    "model": "normal"
-  }'
-```
-
-### Troubleshooting
-
-**Frontend shows "Backend server is not running" error:**
-
-- Make sure the backend server is running on port 3001
-- Check if you have the correct API keys in the .env file
-- Verify no firewall is blocking port 3001
-
-**Backend fails to start:**
-
-- Check if you have Node.js v18+ installed
-- Verify all dependencies are installed with `npm install`
-- Check if port 3001 is available
-
-**API key errors:**
-
-- Make sure you have valid API keys for Gemini and OpenRouter
-- Check that the .env file is properly configured
-- Restart the backend server after updating .env
-
-### Development Workflow
-
-1. Keep both frontend (port 3000) and backend (port 3001) running
-2. Frontend automatically proxies API calls to the backend
-3. Both have hot reload enabled for development
-4. Check browser console and terminal logs for any errors
-
-### Production Deployment Notes
-
-- Update `API_BASE_URL` in `frontend/lib/api-client.ts` for production
-- Set proper CORS origin in backend configuration
-- Use environment variables for API keys in production
-- Consider rate limiting and authentication for production use
+1. **Extreme Burstiness Injection**: AI text uses uniform sentence lengths (~18 words). didi-humanizer aggressively varies sentence lengths (mixing 3-word punchy sentences with 30-word multi-clause complex sentences).
+2. **Perplexity Elevation**: Eliminates predictable statistical token sequences and introduces natural human idioms, active voice, and spontaneous rhythm.
+3. **AI Blacklist Filtering**: Strictly purges typical AI marker words: `delve`, `tapestry`, `testament`, `beacon`, `foster`, `crucial`, `paramount`, `pivotal`, `furthermore`, `moreover`, `it is important to note`, `realm`, etc.
+4. **Real-time AI Detection Analyzer**: Live feedback score estimating Human vs. AI probability.

@@ -20,7 +20,7 @@ app.use(
     origin: [
       config.frontendUrl,
       "http://localhost:3000",
-      "https://quillcraft.app",
+      "https://didihumanizer.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -46,18 +46,21 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 // Health check endpoint
 app.get("/", (req: Request, res: Response): void => {
   res.json({
     success: true,
     data: {
-      message: "QuillCraft Backend API",
-      version: "1.0.0",
+      app: "didi-humanizer",
+      name: "didi-humanizer Backend API",
+      version: "2.0.0",
       status: "healthy",
       timestamp: new Date().toISOString(),
+      configuredBaseUrl: config.aiBaseUrl,
+      configuredModel: config.aiModelName,
     },
   });
 });
@@ -72,9 +75,9 @@ app.use(errorHandler);
 const PORT = config.port;
 
 app.listen(PORT, () => {
-  console.log(`🚀 QuillCraft Backend Server running on port ${PORT}`);
+  console.log(`🛡️ didi-humanizer Backend Server running on port ${PORT}`);
   console.log(`📱 Frontend URL: ${config.frontendUrl}`);
-  console.log(`🌍 Environment: ${config.nodeEnv}`);
+  console.log(`🤖 Configured AI Model: ${config.aiModelName} (${config.aiBaseUrl})`);
   console.log(`⚡ API Available at: http://localhost:${PORT}/api`);
 });
 

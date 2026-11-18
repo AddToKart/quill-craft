@@ -86,7 +86,7 @@ const modes = [
     name: "Custom",
     description: "Advanced customization options",
     icon: Settings,
-    premium: true,
+    premium: false,
   },
 ];
 

@@ -236,7 +236,7 @@ export function QuillbotFlowTool() {
     }
 
     // Set final result
-    const enhancedText = inputText + " [Enhanced through QuillBot Flow]";
+    const enhancedText = inputText + " [Enhanced through Didi Flow]";
     setFinalResult(enhancedText);
     setIsProcessing(false);
     setCurrentStepIndex(-1);
@@ -255,7 +255,7 @@ export function QuillbotFlowTool() {
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
           <Workflow className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold">QuillBot Flow</h1>
+          <h1 className="text-2xl font-bold">Didi Flow</h1>
         </div>
         <p className="text-gray-600 dark:text-gray-400">
           Automated writing enhancement workflows for different use cases

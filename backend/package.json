@@ -1,7 +1,7 @@
 {
-  "name": "quill-craft-backend",
-  "version": "1.0.0",
-  "description": "Backend API for QuillCraft paraphrasing tool",
+  "name": "didi-humanizer-backend",
+  "version": "2.0.0",
+  "description": "Backend API for didi-humanizer AI detector bypass and text humanization",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

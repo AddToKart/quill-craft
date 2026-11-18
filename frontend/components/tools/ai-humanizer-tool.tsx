@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,301 +14,446 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import {
-  Users,
+  ShieldCheck,
   Sparkles,
   Copy,
   RefreshCw,
-  Heart,
-  Brain,
   Zap,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  Settings,
+  Download,
+  FileText,
+  Sliders,
+  Check,
 } from "lucide-react";
+import { toast } from "sonner";
+import { apiClient, AiDetectionResult } from "@/lib/api-client";
+import { ApiSettingsDialog } from "@/components/api-settings-dialog";
 
 export function AiHumanizerTool() {
   const [inputText, setInputText] = useState("");
   const [outputText, setOutputText] = useState("");
   const [isHumanizing, setIsHumanizing] = useState(false);
-  const [humanizationLevel, setHumanizationLevel] = useState([7]);
-  const [writingStyle, setWritingStyle] = useState("natural");
+  const [humanizationLevel, setHumanizationLevel] = useState([8]);
+  const [writingStyle, setWritingStyle] = useState("aggressive");
+  const [detectionScore, setDetectionScore] = useState<AiDetectionResult | null>(null);
+  const [activeModel, setActiveModel] = useState<string>("gpt-4o-mini");
+  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const config = apiClient.getStoredConfig();
+    if (config.modelName) setActiveModel(config.modelName);
+    if (config.apiKey) setHasApiKey(true);
+  }, []);
 
   const handleHumanize = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) {
+      toast.error("Please enter or paste some AI text to humanize");
+      return;
+    }
 
     setIsHumanizing(true);
+    setDetectionScore(null);
 
-    // Simulate AI humanizing process
-    setTimeout(() => {
-      // Mock humanized output
-      const variations = [
-        "This technology has genuinely transformed how we approach everyday challenges, making complex tasks feel surprisingly manageable.",
-        "You know, this tech has really changed the game for handling day-to-day stuff - it's pretty amazing how it simplifies the complicated things.",
-        "I've got to say, this technology has completely revolutionized our approach to tackling routine challenges, and honestly, it makes even the most complex tasks seem almost effortless.",
-        "This technology has fundamentally shifted our perspective on managing daily obstacles, creating an almost intuitive experience with previously daunting tasks.",
-      ];
-
-      const randomOutput =
-        variations[Math.floor(Math.random() * variations.length)];
-      setOutputText(randomOutput);
-      setIsHumanizing(false);
-    }, 2500);
-  };
-
-  const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(outputText);
-    } catch (err) {
-      console.error("Failed to copy:", err);
+      const response = await apiClient.humanizeText({
+        text: inputText,
+        mode: writingStyle,
+        strength: humanizationLevel[0],
+      });
+
+      if (response.success && response.data) {
+        setOutputText(response.data.humanizedText);
+        setDetectionScore(response.data.detectionScore);
+        setActiveModel(response.data.model);
+        toast.success(
+          `Successfully humanized! ZeroGPT & GPTZero Bypass Score: ${response.data.detectionScore.humanProbabilityScore}% Human`
+        );
+      } else {
+        toast.error(response.error?.message || "Failed to humanize text");
+      }
+    } catch (error: any) {
+      console.error("Humanize error:", error);
+      const msg = error.message || "An unexpected error occurred";
+
+      if (msg.includes("API key") || msg.includes("No API key")) {
+        toast.error("API Key required. Click 'AI Settings' to add your subscription key.", {
+          action: {
+            label: "Open Settings",
+            onClick: () => setSettingsOpen(true),
+          },
+        });
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setIsHumanizing(false);
     }
   };
 
-  const getHumanizationLabel = (value: number) => {
-    if (value <= 3) return "Subtle";
-    if (value <= 6) return "Moderate";
-    return "Maximum";
+  const handleCopy = async () => {
+    if (!outputText) return;
+    try {
+      await navigator.clipboard.writeText(outputText);
+      setCopied(true);
+      toast.success("Humanized text copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Copy failed", err);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!outputText) return;
+    const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `didi-humanized-${Date.now()}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Downloaded as text file!");
+  };
+
+  const handleTrySample = () => {
+    const sampleAiText =
+      "Furthermore, it is crucial to delve into the rich tapestry of artificial intelligence, as it plays a pivotal role in revolutionizing modern society. By fostering a holistic interplay between human cognition and neural architectures, we can seamlessly harness unprecedented capabilities that serve as a beacon of hope for future generations.";
+    setInputText(sampleAiText);
+    toast.success("Sample AI text loaded! Notice the dead-giveaway words (delve, tapestry, crucial).");
   };
 
   const writingStyles = [
     {
-      value: "natural",
-      label: "Natural",
-      description: "Conversational and authentic",
-    },
-    {
-      value: "professional",
-      label: "Professional",
-      description: "Polished yet human",
-    },
-    { value: "casual", label: "Casual", description: "Relaxed and friendly" },
-    {
-      value: "creative",
-      label: "Creative",
-      description: "Expressive and engaging",
+      value: "aggressive",
+      label: "🛡️ ZeroGPT & GPTZero Shield (Max Bypass)",
+      description: "Aggressive burstiness and high perplexity to beat strict detectors",
     },
     {
       value: "academic",
-      label: "Academic",
-      description: "Scholarly but human",
-      premium: true,
+      label: "🎓 Academic Humanizer",
+      description: "Scholarly and rigorous without formulaic ChatGPT transitions",
     },
     {
-      value: "storytelling",
-      label: "Storytelling",
-      description: "Narrative and compelling",
-      premium: true,
+      value: "casual",
+      label: "💬 Conversational & Casual",
+      description: "Natural everyday speech with genuine human flow and contractions",
+    },
+    {
+      value: "executive",
+      label: "💼 Executive & Professional",
+      description: "Crisp, persuasive, and fluff-free business prose",
+    },
+    {
+      value: "natural",
+      label: "🌊 Balanced Human Flow",
+      description: "Smooth, organic cadence preserving original style",
     },
   ];
 
+  const inputWordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
+  const outputWordCount = outputText.trim() ? outputText.trim().split(/\s+/).length : 0;
+
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="flex items-center justify-center gap-2">
-          <Heart className="h-6 w-6 text-red-500" />
-          <h1 className="text-2xl font-bold">AI Humanizer</h1>
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
+      {/* Title & Subscription Status Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
+              didi-humanizer
+            </h1>
+            <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+              ZeroGPT & GPTZero Bypass
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Bypass AI detection algorithms by injecting natural human burstiness, irregular clause lengths, and eliminating robotic token patterns.
+          </p>
         </div>
-        <p className="text-gray-600 dark:text-gray-400">
-          Transform AI-generated content into natural, human-like writing
-        </p>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSettingsOpen(true)}
+            className="gap-2 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+          >
+            <Settings className="h-4 w-4 text-emerald-600" />
+            <span className="text-xs font-medium">Model: {activeModel}</span>
+          </Button>
+
+          <ApiSettingsDialog
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
+          />
+        </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-4">
-        {/* Controls */}
-        <div className="xl:col-span-1 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Humanization Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                  Writing Style
-                </label>
-                <Select value={writingStyle} onValueChange={setWritingStyle}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {writingStyles.map((style) => (
-                      <SelectItem
-                        key={style.value}
-                        value={style.value}
-                        disabled={style.premium}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>{style.label}</span>
-                          {style.premium && (
-                            <Badge variant="secondary" className="text-xs">
-                              Pro
-                            </Badge>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 mt-1">
-                  {
-                    writingStyles.find((s) => s.value === writingStyle)
-                      ?.description
-                  }
-                </p>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Humanization Level
-                  </label>
-                  <Badge variant="outline">
-                    {getHumanizationLabel(humanizationLevel[0])}
-                  </Badge>
-                </div>
-                <Slider
-                  value={humanizationLevel}
-                  onValueChange={setHumanizationLevel}
-                  max={10}
-                  min={1}
-                  step={1}
-                  className="mb-2"
-                />
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Light</span>
-                  <span>Aggressive</span>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <h4 className="text-sm font-medium mb-2">Features:</h4>
-                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                  <li className="flex items-center gap-2">
-                    <Sparkles className="h-3 w-3 text-blue-500" />
-                    Natural flow enhancement
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Users className="h-3 w-3 text-green-500" />
-                    Conversational tone
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Brain className="h-3 w-3 text-purple-500" />
-                    Personality injection
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Heart className="h-3 w-3 text-red-500" />
-                    Emotional resonance
-                  </li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Input and Output */}
-        <div className="xl:col-span-3 space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                AI-Generated Text
+      {/* Controls Bar: Mode & Strength Slider */}
+      <Card className="border-border/60 shadow-sm bg-card/60 backdrop-blur">
+        <CardContent className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            {/* Writing Style / Mode */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                Humanizing Strategy
               </label>
-              <Textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste AI-generated content here to humanize..."
-                className="min-h-[300px] resize-none"
-                disabled={isHumanizing}
-              />
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-500">
-                  {inputText.length} characters •{" "}
-                  {inputText.split(/\s+/).filter((w) => w.length > 0).length}{" "}
-                  words
-                </p>
-                <Button
-                  onClick={handleHumanize}
-                  disabled={!inputText.trim() || isHumanizing}
-                  size="sm"
-                >
-                  {isHumanizing ? (
-                    <>
-                      <Zap className="h-4 w-4 mr-2 animate-spin" />
-                      Humanizing...
-                    </>
-                  ) : (
-                    <>
-                      <Heart className="h-4 w-4 mr-2" />
-                      Humanize Text
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Select value={writingStyle} onValueChange={setWritingStyle}>
+                <SelectTrigger className="w-full font-medium">
+                  <SelectValue placeholder="Select writing style" />
+                </SelectTrigger>
+                <SelectContent>
+                  {writingStyles.map((style) => (
+                    <SelectItem key={style.value} value={style.value}>
+                      <div className="flex flex-col text-left py-0.5">
+                        <span className="font-medium text-sm">{style.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {style.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Humanized Result
-              </label>
-              <Textarea
-                value={outputText}
-                readOnly
-                placeholder="Humanized content will appear here..."
-                className="min-h-[300px] resize-none bg-muted/50"
-              />
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-500">
-                  {outputText.length} characters •{" "}
-                  {outputText.split(/\s+/).filter((w) => w.length > 0).length}{" "}
-                  words
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={copyToClipboard}
-                    disabled={!outputText}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </Button>
-                  <Button
-                    onClick={handleHumanize}
-                    disabled={!inputText.trim() || isHumanizing}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Regenerate
-                  </Button>
-                </div>
+            {/* Humanization Strength Slider */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Sliders className="h-3.5 w-3.5 text-emerald-600" />
+                  Bypass & Restructuring Strength
+                </span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  Level {humanizationLevel[0]}/10 (
+                  {humanizationLevel[0] >= 8
+                    ? "Maximum Bypass"
+                    : humanizationLevel[0] >= 5
+                    ? "Balanced"
+                    : "Subtle"}
+                  )
+                </span>
               </div>
+              <Slider
+                value={humanizationLevel}
+                onValueChange={setHumanizationLevel}
+                max={10}
+                min={1}
+                step={1}
+                className="py-2"
+              />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {outputText && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">95%</div>
-                    <div className="text-xs text-gray-500">Human-like</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">
-                      8.7/10
-                    </div>
-                    <div className="text-xs text-gray-500">Readability</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-purple-600">
-                      92%
-                    </div>
-                    <div className="text-xs text-gray-500">Natural Flow</div>
-                  </div>
+      {/* Editor Dual-Pane */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Input AI Text */}
+        <Card className="flex flex-col border-border/80 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b bg-muted/20">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Input AI Text
+              </CardTitle>
+              <Badge variant="outline" className="text-xs font-normal">
+                {inputWordCount} words
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleTrySample}
+                className="text-xs h-7 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+              >
+                Try Sample AI Text
+              </Button>
+              {inputText && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setInputText("")}
+                  className="text-xs h-7 px-2 text-muted-foreground"
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-4 flex-1 flex flex-col">
+            <Textarea
+              placeholder="Paste AI-generated text here (e.g. from ChatGPT, Claude, Copilot, or Gemini) to humanize and bypass ZeroGPT/GPTZero..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="flex-1 min-h-[320px] resize-none border-0 focus-visible:ring-0 p-0 text-base leading-relaxed"
+            />
+
+            <div className="pt-3 border-t flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {inputText.length} characters
+              </span>
+
+              <Button
+                onClick={handleHumanize}
+                disabled={isHumanizing || !inputText.trim()}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 shadow-sm px-6"
+              >
+                {isHumanizing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Humanizing...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    Bypass AI Detection
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Right: Humanized Output */}
+        <Card className="flex flex-col border-border/80 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b bg-emerald-500/5">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                <Sparkles className="h-4 w-4" />
+                Humanized Output (ZeroGPT Safe)
+              </CardTitle>
+              {outputWordCount > 0 && (
+                <Badge variant="outline" className="text-xs font-normal border-emerald-500/30 text-emerald-700 dark:text-emerald-400">
+                  {outputWordCount} words
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1">
+              {outputText && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="h-7 px-2 text-xs gap-1"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDownload}
+                    className="h-7 px-2 text-xs gap-1"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Export
+                  </Button>
+                </>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-4 flex-1 flex flex-col justify-between">
+            {outputText ? (
+              <div className="flex-1 whitespace-pre-wrap text-base leading-relaxed font-normal min-h-[280px]">
+                {outputText}
+              </div>
+            ) : (
+              <div className="flex-1 min-h-[280px] flex flex-col items-center justify-center text-center text-muted-foreground p-6">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3 text-emerald-600">
+                  <ShieldCheck className="h-6 w-6" />
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                <p className="text-sm font-medium">Your 100% human-written version will appear here</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                  Text is rewritten with varied sentence burstiness and unpredictable human vocabulary to score 0% AI on ZeroGPT and GPTZero.
+                </p>
+              </div>
+            )}
+
+            {/* AI Bypass Detection Score Indicator */}
+            {detectionScore && (
+              <div className="mt-4 pt-3 border-t">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                        ZeroGPT / GPTZero Bypass Confidence
+                      </span>
+                    </div>
+                    <Badge className="bg-emerald-600 text-white font-mono text-xs">
+                      {detectionScore.humanProbabilityScore}% Human / {detectionScore.aiProbabilityScore}% AI
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-[11px] text-muted-foreground mt-2">
+                    <div className="bg-background/80 p-1.5 rounded border text-center">
+                      <div className="font-semibold text-foreground">Burstiness</div>
+                      <div>{detectionScore.burstinessScore}% (Irregular)</div>
+                    </div>
+                    <div className="bg-background/80 p-1.5 rounded border text-center">
+                      <div className="font-semibold text-foreground">Perplexity</div>
+                      <div>{detectionScore.perplexityScore}% (Natural)</div>
+                    </div>
+                    <div className="bg-background/80 p-1.5 rounded border text-center">
+                      <div className="font-semibold text-foreground">AI Markers</div>
+                      <div className="text-emerald-600 font-bold">0 Detected</div>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-2">
+                    {detectionScore.feedback}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Guide Banner */}
+      <Card className="border-border/60 bg-muted/30">
+        <CardContent className="p-4 sm:p-5">
+          <h3 className="text-sm font-bold flex items-center gap-2 mb-2">
+            <Zap className="h-4 w-4 text-amber-500" />
+            How didi-humanizer defeats ZeroGPT & GPTZero
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-muted-foreground">
+            <div className="p-2.5 rounded-md bg-background border">
+              <span className="font-semibold text-foreground block mb-1">1. Burstiness Injection</span>
+              ZeroGPT flags uniform sentence lengths. We introduce human variance: ultra-short sentences alongside complex, multi-clause thoughts.
+            </div>
+            <div className="p-2.5 rounded-md bg-background border">
+              <span className="font-semibold text-foreground block mb-1">2. Perplexity Scrambling</span>
+              GPTZero calculates mathematical token predictability. We replace statistically probable AI phrases with genuine human idioms and active verbs.
+            </div>
+            <div className="p-2.5 rounded-md bg-background border">
+              <span className="font-semibold text-foreground block mb-1">3. Zero-Tolerance Blacklist</span>
+              Every dead-giveaway AI word (delve, tapestry, crucial, foster, realm, furthermore) is strictly filtered and stripped out.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

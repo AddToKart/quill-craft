@@ -1,44 +1,41 @@
 import { ModelConfig, ModelType } from "@/types";
+import { config } from "@/config";
 
 export const modelConfigurations: Record<ModelType, ModelConfig> = {
-  lite: {
-    id: "lite",
-    name: "OpenAI GPT OSS 20B",
-    provider: "openrouter",
-    modelName: "openai/gpt-oss-20b:free",
-    maxTokens: 1024,
-    temperature: 0.3, // Lower temperature for more consistent, focused paraphrasing
+  custom: {
+    id: "custom",
+    name: "Custom Subscription",
+    provider: "custom",
+    modelName: config.aiModelName,
+    maxTokens: 3000,
+    temperature: 0.8,
   },
-  normal: {
-    id: "normal",
-    name: "GLM-4.5 Air",
-    provider: "openrouter",
-    modelName: "z-ai/glm-4.5-air:free",
+  standard: {
+    id: "standard",
+    name: "Bypass Standard",
+    provider: "openai-compatible",
+    modelName: config.aiModelName,
     maxTokens: 2048,
-    temperature: 0.4, // Balanced creativity and consistency
+    temperature: 0.75,
   },
-  heavy: {
-    id: "heavy",
-    name: "Gemini 2.5 Flash",
-    provider: "gemini",
-    modelName: "gemini-2.0-flash-exp",
+  smart: {
+    id: "smart",
+    name: "Bypass Smart",
+    provider: "openai-compatible",
+    modelName: config.aiModelName,
     maxTokens: 3072,
-    temperature: 0.5, // More creative for complex paraphrasing
+    temperature: 0.85,
   },
   pro: {
     id: "pro",
-    name: "Gemini 2.5 Flash Pro",
-    provider: "gemini",
-    modelName: "gemini-2.0-flash-exp",
+    name: "ZeroGPT Shield Max",
+    provider: "openai-compatible",
+    modelName: config.aiModelName,
     maxTokens: 4096,
-    temperature: 0.6, // Highest creativity for premium quality
+    temperature: 0.9,
   },
 };
 
 export const getModelConfig = (modelType: ModelType): ModelConfig => {
-  const config = modelConfigurations[modelType];
-  if (!config) {
-    throw new Error(`Unsupported model type: ${modelType}`);
-  }
-  return config;
+  return modelConfigurations[modelType] || modelConfigurations.custom;
 };
